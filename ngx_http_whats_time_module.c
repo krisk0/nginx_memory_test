@@ -154,16 +154,20 @@ static ngx_int_t ngx_http_whats_time_handler(ngx_http_request_t *r) {
           not free it
         */
         
-        // Send answer, free memory taken at line 143 above
-        void* free_me = answer->pos;
-        rc=ngx_http_output_filter(r, &out);
-        (void)ngx_pfree(r->pool,free_me);
+        /*
+         Send answer, free memory taken at line 143 above.
 
-        // memory leak: current_time not freed
-#if !STACK_TIME
-        // free memory taken at line 132
-        (void)ngx_pfree(r->pool,current_time);
-#endif
+         Looks like ngx_pfree is not required, disabling call
+        */
+        #if 0
+         void* free_me = answer->pos;
+         rc=ngx_http_output_filter(r, &out);
+         (void)ngx_pfree(r->pool,free_me);
+        #else
+         return ngx_http_output_filter(r, &out);
+        #endif
+
+        // not freeing current_time
 
         break;
     }
